@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: news-aggregator
+    env: python
+    plan: free
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements.txt
+      mkdir -p data/raw data/processed models evaluation logs
+    startCommand: python main.py web
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: FLASK_DEBUG
+        value: false
+      - key: DATABASE_URL
+        value: sqlite:///data/news_database.db
+      - key: WEB_APP_HOST
+        value: 0.0.0.0
+      - key: WEB_APP_PORT
+        value: 10000
+      - key: HF_HUB_DISABLE_SYMLINKS_WARNING
+        value: 1
+      - key: TOKENIZERS_PARALLELISM
+        value: false
+    healthCheckPath: /
+    disk:
+      name: news-data
+      mountPath: /opt/render/project/src/data
+      sizeGB: 1
