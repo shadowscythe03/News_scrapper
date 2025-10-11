@@ -13,6 +13,8 @@ on:
 jobs:
   ml-pipeline:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Allow pushing changes back to repo
     
     steps:
     - name: Checkout code
@@ -87,11 +89,17 @@ jobs:
     - name: Commit and push results
       if: github.ref == 'refs/heads/main'
       run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
         git add dvc.lock
         if ! git diff --staged --quiet; then
           git commit -m "🤖 Auto-update: ML pipeline results [skip ci]"
           git push
+        else
+          echo "No changes to commit"
         fi
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   test-application:
     runs-on: ubuntu-latest
