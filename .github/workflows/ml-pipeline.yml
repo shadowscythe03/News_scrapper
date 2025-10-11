@@ -131,10 +131,31 @@ jobs:
         python -c "from src.chatbot.chatbot_engine import ChatbotEngine; print('✅ Chatbot imports successfully!')"
         python -c "from src.classification.classifier import NewsClassifier; print('✅ Classifier imports successfully!')"
         
-    - name: Test database functionality
+    - name: Test core functionality
       run: |
-        echo "🗄️ Testing database functionality..."
-        python -c "from src.scraping.news_scraper import DatabaseManager; db = DatabaseManager(); print('✅ Database connection works!')"
+        echo "🗄️ Testing core functionality..."
+        python -c "
+        import os
+        import sqlite3
+        
+        # Test database creation
+        os.makedirs('data', exist_ok=True)
+        conn = sqlite3.connect('data/test.db')
+        conn.execute('CREATE TABLE IF NOT EXISTS test (id INTEGER PRIMARY KEY)')
+        conn.close()
+        print('✅ Database functionality works!')
+        
+        # Test configuration loading
+        import yaml
+        with open('configs/config.yaml', 'r') as f:
+            config = yaml.safe_load(f)
+        print('✅ Configuration loading works!')
+        
+        # Test main components initialization
+        from src.scraping.news_scraper import DatabaseManager
+        db = DatabaseManager('data/test.db')
+        print('✅ All core components work!')
+        "
 
   deployment-ready:
     runs-on: ubuntu-latest
