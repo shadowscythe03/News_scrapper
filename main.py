@@ -42,8 +42,26 @@ def run_classification():
 def run_web_app():
     """Run the web application"""
     print("🌐 Starting web application...")
-    os.chdir("src/web_app")
-    subprocess.run([sys.executable, "app.py"])
+    
+    # Setup environment variables for cloud hosting
+    import os
+    os.environ.setdefault('WEB_APP_HOST', '0.0.0.0')
+    os.environ.setdefault('WEB_APP_PORT', '5000')
+    
+    # Import and run the app
+    sys.path.append('.')
+    from src.web_app.app import app, config, init_components
+    
+    # Initialize components
+    init_components()
+    
+    # Get port from environment (for cloud hosting)
+    port = int(os.environ.get('PORT', os.environ.get('WEB_APP_PORT', config['web_app']['port'])))
+    host = os.environ.get('WEB_APP_HOST', config['web_app']['host'])
+    debug = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
+    
+    print(f"🚀 Starting server on {host}:{port}")
+    app.run(host=host, port=port, debug=debug)
 
 # Scheduler functionality moved to GitHub Actions
 # See .github/workflows/ml-pipeline.yml for automated scheduling

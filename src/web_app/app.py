@@ -21,13 +21,24 @@ from src.scraping.news_scraper import NewsScraper
 from src.classification.classifier import NewsClassifier
 from src.chatbot.chatbot_engine import ChatbotEngine
 
-app = Flask(__name__)
-CORS(app)
+def create_app():
+    """Create and configure Flask application"""
+    app = Flask(__name__)
+    CORS(app)
+    
+    # Load configuration
+    config_path = os.path.join(os.path.dirname(__file__), '..', '..', 'configs', 'config.yaml')
+    with open(config_path, 'r') as f:
+        config = yaml.safe_load(f)
+    
+    # Override with environment variables for production
+    config['web_app']['host'] = os.environ.get('WEB_APP_HOST', config['web_app']['host'])
+    config['web_app']['port'] = int(os.environ.get('WEB_APP_PORT', config['web_app']['port']))
+    config['web_app']['debug'] = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
+    
+    return app, config
 
-# Load configuration
-config_path = os.path.join(os.path.dirname(__file__), '..', '..', 'configs', 'config.yaml')
-with open(config_path, 'r') as f:
-    config = yaml.safe_load(f)
+app, config = create_app()
 
 # Setup logging
 logging.basicConfig(
@@ -309,3 +320,11 @@ if __name__ == '__main__':
         port=config['web_app']['port'],
         debug=config['web_app']['debug']
     )
+
+# For production deployment (Gunicorn, etc.)
+def create_production_app():
+    """Create app for production deployment"""
+    production_app, _ = create_app()
+    with production_app.app_context():
+        init_components()
+    return production_app
