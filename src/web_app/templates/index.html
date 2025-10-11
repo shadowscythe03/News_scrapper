@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+
+{% block title %}News Aggregator - Latest News{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Main Content -->
+    <div class="col-lg-8">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="fas fa-newspaper text-primary"></i> Latest News</h1>
+            <span class="badge bg-secondary">{{ total_articles }} articles</span>
+        </div>
+
+        <!-- Articles -->
+        <div class="row">
+            {% for article in articles %}
+            <div class="col-12 mb-4">
+                <div class="card article-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge bg-primary category-badge">
+                                {{ article.classified_category or article.category or 'General' }}
+                            </span>
+                            <div class="d-flex align-items-center">
+                                {% if article.sentiment_score %}
+                                <i class="{{ 'fas fa-smile text-success' if article.sentiment_score > 0.1 else 'fas fa-frown text-danger' if article.sentiment_score < -0.1 else 'fas fa-meh text-secondary' }}"></i>
+                                <small class="text-muted ms-1">{{ "%.2f"|format(article.sentiment_score or 0) }}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <h5 class="card-title">
+                            <a href="{{ article.url }}" target="_blank" class="text-decoration-none">
+                                {{ article.title }}
+                            </a>
+                        </h5>
+                        
+                        {% if article.content %}
+                        <p class="card-text">
+                            {{ article.content[:300] }}{% if article.content|length > 300 %}...{% endif %}
+                        </p>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                <i class="fas fa-building"></i> {{ article.source }}
+                            </small>
+                            <small class="text-muted">
+                                <i class="fas fa-clock"></i> {{ article.published_date }}
+                            </small>
+                        </div>
+                        
+                        <div class="mt-2">
+                            <a href="{{ article.url }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-external-link-alt"></i> Read Full Article
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <h3 class="text-muted">No articles found</h3>
+                    <p class="text-muted">Try refreshing the news or check back later.</p>
+                    <button class="btn btn-primary" onclick="triggerScraping()">
+                        <i class="fas fa-sync-alt"></i> Refresh News
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Stats Card -->
+        <div class="card stats-card mb-4">
+            <div class="card-body">
+                <h5 class="card-title text-white">
+                    <i class="fas fa-chart-bar"></i> News Overview
+                </h5>
+                <div class="row text-center">
+                    <div class="col-12">
+                        <h2 class="text-white">{{ total_articles }}</h2>
+                        <p class="text-white-50 mb-0">Articles Today</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Categories -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-tags"></i> Categories</h5>
+            </div>
+            <div class="card-body">
+                {% for category in categories %}
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <a href="{{ url_for('category_view', category_name=category.cat) }}" 
+                       class="text-decoration-none">
+                        {{ category.cat.title() }}
+                    </a>
+                    <span class="badge bg-secondary">{{ category.count }}</span>
+                </div>
+                {% endfor %}
+                
+                {% if not categories %}
+                <p class="text-muted mb-0">No categories available</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-lightning-bolt"></i> Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary" onclick="triggerScraping()">
+                        <i class="fas fa-sync-alt"></i> Refresh News
+                    </button>
+                    <a href="{{ url_for('chatbot_page') }}" class="btn btn-outline-info">
+                        <i class="fas fa-robot"></i> AI Assistant
+                    </a>
+                    <button class="btn btn-outline-success" onclick="loadStats()">
+                        <i class="fas fa-chart-line"></i> View Statistics
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Modal -->
+<div class="modal fade" id="statsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-chart-line"></i> News Statistics</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="statsContent">
+                <div class="text-center">
+                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                    <p class="mt-2">Loading statistics...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function loadStats() {
+    const modal = new bootstrap.Modal(document.getElementById('statsModal'));
+    modal.show();
+    
+    fetch('/api/stats')
+        .then(response => response.json())
+        .then(data => {
+            let html = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-newspaper"></i> Total Articles</h6>
+                        <h3 class="text-primary">${data.total_articles}</h3>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-tags"></i> Categories</h6>
+                        <h3 class="text-info">${data.categories.length}</h3>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Top Categories</h6>
+                        <ul class="list-group list-group-flush">
+            `;
+            
+            data.categories.slice(0, 5).forEach(cat => {
+                html += `<li class="list-group-item d-flex justify-content-between align-items-center">
+                    ${cat.cat} <span class="badge bg-primary rounded-pill">${cat.count}</span>
+                </li>`;
+            });
+            
+            html += `</ul></div><div class="col-md-6"><h6>Sentiment Distribution</h6><ul class="list-group list-group-flush">`;
+            
+            data.sentiment.forEach(sent => {
+                const iconClass = sent.sentiment === 'positive' ? 'fas fa-smile text-success' : 
+                                sent.sentiment === 'negative' ? 'fas fa-frown text-danger' : 
+                                'fas fa-meh text-secondary';
+                html += `<li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span><i class="${iconClass}"></i> ${sent.sentiment}</span>
+                    <span class="badge bg-secondary rounded-pill">${sent.count}</span>
+                </li>`;
+            });
+            
+            html += `</ul></div></div>`;
+            
+            document.getElementById('statsContent').innerHTML = html;
+        })
+        .catch(error => {
+            document.getElementById('statsContent').innerHTML = 
+                `<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> Error loading statistics: ${error.message}</div>`;
+        });
+}
+</script>
+{% endblock %}

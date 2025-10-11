@@ -1,0 +1,59 @@
+# DVC Pipeline Configuration
+# This file defines the ML pipeline stages for news aggregation
+
+stages:
+  data_collection:
+    cmd: python scripts/run_scraping.py
+    deps:
+    - src/scraping/news_scraper.py
+    - configs/config.yaml
+    outs:
+    - data/raw/articles.db:
+        cache: false
+    
+  data_preprocessing:
+    cmd: python scripts/preprocess_data.py
+    deps:
+    - data/raw/articles.db
+    - src/classification/classifier.py
+    outs:
+    - data/processed/training_data.csv
+    - data/processed/features.pkl
+    
+  model_training:
+    cmd: python scripts/train_models.py
+    deps:
+    - data/processed/training_data.csv
+    - src/classification/classifier.py
+    - configs/config.yaml
+    params:
+    - classification.training
+    outs:
+    - models/sklearn_classifier.joblib
+    - models/tfidf_vectorizer.joblib
+    - models/label_encoder.joblib
+    metrics:
+    - models/metrics.json
+    
+  classification:
+    cmd: python scripts/classify_articles.py
+    deps:
+    - models/sklearn_classifier.joblib
+    - models/tfidf_vectorizer.joblib
+    - models/label_encoder.joblib
+    - data/raw/articles.db
+    - src/classification/classifier.py
+    outs:
+    - data/processed/classified_articles.csv:
+        cache: false
+        
+  evaluation:
+    cmd: python scripts/evaluate_model.py
+    deps:
+    - data/processed/classified_articles.csv
+    - models/sklearn_classifier.joblib
+    metrics:
+    - evaluation/metrics.json
+    plots:
+    - evaluation/confusion_matrix.png
+    - evaluation/classification_report.txt

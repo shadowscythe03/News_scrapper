@@ -1,0 +1,29 @@
+# Parameters for DVC pipeline
+
+classification:
+  training:
+    batch_size: 16
+    epochs: 3
+    learning_rate: 0.00002
+    max_length: 512
+    
+  model:
+    name: "distilbert-base-uncased"
+    dropout: 0.1
+    
+data_processing:
+  min_text_length: 50
+  max_text_length: 5000
+  test_size: 0.2
+  random_state: 42
+  
+scraping:
+  max_articles_per_source: 50
+  timeout: 30
+  
+evaluation:
+  metrics:
+    - accuracy
+    - precision
+    - recall
+    - f1_score

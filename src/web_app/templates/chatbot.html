@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}AI News Assistant - News Aggregator{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">
+                    <i class="fas fa-robot"></i> AI News Assistant
+                </h3>
+                <p class="mb-0">Ask me about current news, sentiment analysis, or get article summaries!</p>
+            </div>
+            <div class="card-body p-0">
+                <!-- Chat Messages -->
+                <div id="chatMessages" class="p-3" style="height: 400px; overflow-y: auto; background-color: #f8f9fa;">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Welcome!</strong> I can help you with:
+                        <ul class="mb-0 mt-2">
+                            <li>📊 Summarizing recent news</li>
+                            <li>😊 Analyzing current mood/sentiment</li>
+                            <li>📰 Showing latest headlines</li>
+                            <li>🏷️ Finding articles by category</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Chat Input -->
+                <div class="p-3 border-top">
+                    <div class="input-group">
+                        <input type="text" 
+                               id="messageInput" 
+                               class="form-control" 
+                               placeholder="Ask me about the news..."
+                               onkeypress="handleKeyPress(event)">
+                        <button class="btn btn-primary" onclick="sendMessage()">
+                            <i class="fas fa-paper-plane"></i> Send
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Questions -->
+        <div class="mt-4">
+            <h5><i class="fas fa-lightbulb"></i> Quick Questions</h5>
+            <div class="row">
+                <div class="col-md-6 mb-2">
+                    <button class="btn btn-outline-primary btn-sm w-100" onclick="quickQuestion('Summarize the latest news')">
+                        📊 Summarize Latest News
+                    </button>
+                </div>
+                <div class="col-md-6 mb-2">
+                    <button class="btn btn-outline-primary btn-sm w-100" onclick="quickQuestion('What is the current mood?')">
+                        😊 Current Mood Analysis
+                    </button>
+                </div>
+                <div class="col-md-6 mb-2">
+                    <button class="btn btn-outline-primary btn-sm w-100" onclick="quickQuestion('What are the latest headlines?')">
+                        📰 Latest Headlines
+                    </button>
+                </div>
+                <div class="col-md-6 mb-2">
+                    <button class="btn btn-outline-primary btn-sm w-100" onclick="quickQuestion('Show me technology news')">
+                        💻 Technology News
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let isWaiting = false;
+
+function handleKeyPress(event) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        sendMessage();
+    }
+}
+
+function quickQuestion(question) {
+    document.getElementById('messageInput').value = question;
+    sendMessage();
+}
+
+function sendMessage() {
+    if (isWaiting) return;
+    
+    const input = document.getElementById('messageInput');
+    const message = input.value.trim();
+    
+    if (!message) return;
+    
+    // Add user message to chat
+    addMessage(message, 'user');
+    
+    // Clear input
+    input.value = '';
+    
+    // Add thinking indicator
+    addThinkingIndicator();
+    
+    // Send message to server
+    isWaiting = true;
+    fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: message })
+    })
+    .then(response => response.json())
+    .then(data => {
+        removeThinkingIndicator();
+        if (data.error) {
+            addMessage('Sorry, I encountered an error: ' + data.error, 'bot', true);
+        } else {
+            addMessage(data.response, 'bot');
+        }
+    })
+    .catch(error => {
+        removeThinkingIndicator();
+        addMessage('Sorry, I am having trouble connecting. Please try again.', 'bot', true);
+        console.error('Error:', error);
+    })
+    .finally(() => {
+        isWaiting = false;
+    });
+}
+
+function addMessage(message, sender, isError = false) {
+    const chatMessages = document.getElementById('chatMessages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `mb-3 ${sender === 'user' ? 'text-end' : 'text-start'}`;
+    
+    const isBot = sender === 'bot';
+    const bgColor = isError ? 'bg-danger' : (isBot ? 'bg-light' : 'bg-primary');
+    const textColor = isError ? 'text-white' : (isBot ? 'text-dark' : 'text-white');
+    const icon = isBot ? '<i class="fas fa-robot me-2"></i>' : '<i class="fas fa-user me-2"></i>';
+    
+    messageDiv.innerHTML = `
+        <div class="d-inline-block ${bgColor} ${textColor} rounded px-3 py-2 shadow-sm" style="max-width: 80%;">
+            ${icon}${formatMessage(message)}
+        </div>
+        <div class="small text-muted mt-1">
+            ${new Date().toLocaleTimeString()}
+        </div>
+    `;
+    
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function addThinkingIndicator() {
+    const chatMessages = document.getElementById('chatMessages');
+    const thinkingDiv = document.createElement('div');
+    thinkingDiv.id = 'thinkingIndicator';
+    thinkingDiv.className = 'mb-3 text-start';
+    thinkingDiv.innerHTML = `
+        <div class="d-inline-block bg-light text-dark rounded px-3 py-2 shadow-sm">
+            <i class="fas fa-robot me-2"></i>
+            <i class="fas fa-spinner fa-spin"></i> Thinking...
+        </div>
+    `;
+    
+    chatMessages.appendChild(thinkingDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function removeThinkingIndicator() {
+    const indicator = document.getElementById('thinkingIndicator');
+    if (indicator) {
+        indicator.remove();
+    }
+}
+
+function formatMessage(message) {
+    // Convert newlines to <br> and preserve formatting
+    return message
+        .replace(/\n/g, '<br>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>');
+}
+
+// Focus on input when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('messageInput').focus();
+});
+</script>
+{% endblock %}

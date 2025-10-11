@@ -1,0 +1,79 @@
+# News Aggregator Configuration
+
+# Database settings
+database:
+  type: "sqlite"
+  path: "data/news_database.db"
+
+# News sources configuration
+news_sources:
+  rss_feeds:
+    - name: "BBC News"
+      url: "http://feeds.bbci.co.uk/news/rss.xml"
+      category: "general"
+    - name: "CNN"
+      url: "http://rss.cnn.com/rss/edition.rss"
+      category: "general"
+    - name: "TechCrunch"
+      url: "https://techcrunch.com/feed/"
+      category: "technology"
+    - name: "Reuters"
+      url: "https://www.reuters.com/rssFeed/businessNews"
+      category: "business"
+    - name: "ESPN"
+      url: "https://www.espn.com/espn/rss/news"
+      category: "sports"
+
+# Classification model settings
+classification:
+  model_name: "distilbert-base-uncased"  # CPU-friendly model
+  categories:
+    - "politics"
+    - "technology"
+    - "business"
+    - "sports"
+    - "entertainment"
+    - "health"
+    - "science"
+    - "general"
+  
+  # Training parameters
+  training:
+    batch_size: 16  # Small batch for CPU
+    epochs: 3
+    learning_rate: 2e-5
+
+# Web app settings
+web_app:
+  host: "0.0.0.0"
+  port: 5000
+  debug: true
+  articles_per_page: 20
+
+# Chatbot settings
+chatbot:
+  model_name: "microsoft/DialoGPT-medium"  # CPU-friendly chatbot model
+  max_length: 512
+  temperature: 0.7
+  top_articles_count: 10
+
+# Scraping settings
+scraping:
+  interval_hours: 168  # 1 week
+  max_articles_per_source: 50
+  timeout: 30
+  user_agent: "NewsAggregator/1.0"
+
+# DVC settings
+dvc:
+  remote_storage: "local"  # Can be changed to s3, gcs, etc.
+  
+# Logging
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  
+# API keys (to be set in .env file)
+api_keys:
+  news_api: null  # Set in .env as NEWS_API_KEY
+  openai: null    # Set in .env as OPENAI_API_KEY
