@@ -14,15 +14,15 @@ stages:
     outs:
     - path: data/raw/articles.db
       hash: md5
-      md5: 433e2c91e4621987afcf4ad0927f959e
-      size: 536576
+      md5: 35f5ba5bf8c6eb7000b4e5fbdf725a2d
+      size: 528384
   data_preprocessing:
     cmd: python scripts/preprocess_data.py
     deps:
     - path: data/raw/articles.db
       hash: md5
-      md5: 433e2c91e4621987afcf4ad0927f959e
-      size: 536576
+      md5: 35f5ba5bf8c6eb7000b4e5fbdf725a2d
+      size: 528384
     - path: src/classification/classifier.py
       hash: md5
       md5: b5ef13bde85b5724ad5adec3f623d1ca
@@ -30,12 +30,12 @@ stages:
     outs:
     - path: data/processed/features.pkl
       hash: md5
-      md5: c12ecfaf99ce810fb4039e14b016a68e
+      md5: 4b2cd2c659b3f0ce2832720cc07f457a
       size: 219
     - path: data/processed/training_data.csv
       hash: md5
-      md5: 541d19264971d61e932cea845a840e3e
-      size: 619619
+      md5: 33dee968f121c20dc4b7a054010c0270
+      size: 646627
   model_training:
     cmd: python scripts/train_models.py
     deps:
@@ -45,8 +45,8 @@ stages:
       size: 1770
     - path: data/processed/training_data.csv
       hash: md5
-      md5: 541d19264971d61e932cea845a840e3e
-      size: 619619
+      md5: 33dee968f121c20dc4b7a054010c0270
+      size: 646627
     - path: src/classification/classifier.py
       hash: md5
       md5: b5ef13bde85b5724ad5adec3f623d1ca
@@ -65,35 +65,35 @@ stages:
       size: 489
     - path: models/metrics.json
       hash: md5
-      md5: c72259f1f3421152e82e1d6dccedc8d7
+      md5: aa87cddfecbd52a069300289a5acc32e
       size: 105
     - path: models/sklearn_classifier.joblib
       hash: md5
-      md5: 7db3170420c0f42de4ec27e5b3acf422
-      size: 26063
+      md5: 5a88a7db3e21826a08326613fba2e16d
+      size: 30063
     - path: models/tfidf_vectorizer.joblib
       hash: md5
-      md5: 675a59153f13497abbac6921ba0fc23c
-      size: 119910
+      md5: 8595416eb272e30a44222b1f624e46ca
+      size: 140165
   classification:
     cmd: python scripts/classify_articles.py
     deps:
     - path: data/raw/articles.db
       hash: md5
-      md5: 433e2c91e4621987afcf4ad0927f959e
-      size: 536576
+      md5: 35f5ba5bf8c6eb7000b4e5fbdf725a2d
+      size: 528384
     - path: models/label_encoder.joblib
       hash: md5
       md5: 309130a175c7e74b936ad9ecdd0392f6
       size: 489
     - path: models/sklearn_classifier.joblib
       hash: md5
-      md5: 7db3170420c0f42de4ec27e5b3acf422
-      size: 26063
+      md5: 5a88a7db3e21826a08326613fba2e16d
+      size: 30063
     - path: models/tfidf_vectorizer.joblib
       hash: md5
-      md5: 675a59153f13497abbac6921ba0fc23c
-      size: 119910
+      md5: 8595416eb272e30a44222b1f624e46ca
+      size: 140165
     - path: src/classification/classifier.py
       hash: md5
       md5: b5ef13bde85b5724ad5adec3f623d1ca
@@ -112,18 +112,18 @@ stages:
       size: 85
     - path: models/sklearn_classifier.joblib
       hash: md5
-      md5: 7db3170420c0f42de4ec27e5b3acf422
-      size: 26063
+      md5: 5a88a7db3e21826a08326613fba2e16d
+      size: 30063
     outs:
     - path: evaluation/classification_report.txt
       hash: md5
-      md5: 301cb62e6a4e8d9967f9b7e0640b6451
+      md5: 7624bfd5f8800eb572035dc1457a343c
       size: 416
     - path: evaluation/confusion_matrix.png
       hash: md5
-      md5: 116129b444ff5b4a800ea39c7c6603b6
-      size: 101736
+      md5: ee5bd908c9ba7968f0eec99a578e8462
+      size: 102396
     - path: evaluation/metrics.json
       hash: md5
-      md5: 6f555157402431354e5ba7df1cc4da17
-      size: 1009
+      md5: d75d9d1a5a18e0559dd1fea9f938bf16
+      size: 1007
